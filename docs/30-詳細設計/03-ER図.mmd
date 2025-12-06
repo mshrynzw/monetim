@@ -1,53 +1,77 @@
 erDiagram
-    TENANTS ||--o{ USERS : "has"
-    TENANTS ||--o{ GROUPS : "has"
-    TENANTS ||--o{ PUNCH_TYPES : "has"
-    TENANTS ||--o{ LEAVE_TYPES : "has"
-    TENANTS ||--o{ WORK_TIME_RULES : "has"
-    TENANTS ||--o{ PAYROLL_SYSTEMS : "has"
+    m_tenants ||--o{ t_users : "has"
+    m_tenants ||--o{ t_groups : "has"
+    m_tenants ||--o{ m_punch_types : "has"
+    m_tenants ||--o{ m_leave_types : "has"
+    m_tenants ||--o{ m_work_time_rules : "has"
+    m_tenants ||--o{ m_payroll_systems : "has"
     
-    USERS ||--o{ TENANT_USERS : "belongs to"
-    TENANTS ||--o{ TENANT_USERS : "has"
+    t_users ||--o{ r_tenant_users : "belongs to"
+    m_tenants ||--o{ r_tenant_users : "has"
     
-    USERS ||--o{ GROUP_USERS : "belongs to"
-    GROUPS ||--o{ GROUP_USERS : "has"
+    t_users ||--o{ r_group_users : "belongs to"
+    t_groups ||--o{ r_group_users : "has"
     
-    USERS ||--o{ ATTENDANCE_RECORDS : "creates"
-    USERS ||--o{ SHIFTS : "has"
-    USERS ||--o{ WORK_TIME_RECORDS : "has"
-    USERS ||--o{ LEAVE_REQUESTS : "creates"
-    USERS ||--o{ LEAVE_GRANTS : "receives"
-    USERS ||--o{ LEAVE_BALANCES : "has"
-    USERS ||--o{ USER_PAYROLL_SETTINGS : "has"
-    USERS ||--o{ PAYROLLS : "receives"
-    USERS ||--o{ NOTIFICATIONS : "receives"
+    t_users ||--o{ t_attendance_records : "creates"
+    t_users ||--o{ t_shifts : "has"
+    t_users ||--o{ t_work_time_records : "has"
+    t_users ||--o{ t_leave_requests : "creates"
+    t_users ||--o{ t_leave_grants : "receives"
+    t_users ||--o{ t_leave_balances : "has"
+    t_users ||--o{ t_user_payroll_settings : "has"
+    t_users ||--o{ t_payrolls : "receives"
+    t_users ||--o{ t_notifications : "receives"
     
-    PUNCH_TYPES ||--o{ ATTENDANCE_RECORDS : "used in"
-    SHIFTS ||--o{ ATTENDANCE_RECORDS : "contains"
+    m_punch_types ||--o{ t_attendance_records : "used in"
+    t_shifts ||--o{ t_attendance_records : "contains"
     
-    WORK_TIME_RULES ||--o{ WORK_TIME_RECORDS : "used for"
+    m_work_time_rules ||--o{ t_work_time_records : "used for"
     
-    LEAVE_TYPES ||--o{ LEAVE_REQUESTS : "used in"
-    LEAVE_TYPES ||--o{ LEAVE_GRANTS : "granted as"
-    LEAVE_TYPES ||--o{ LEAVE_BALANCES : "for"
+    m_leave_types ||--o{ t_leave_requests : "used in"
+    m_leave_types ||--o{ t_leave_grants : "granted as"
+    m_leave_types ||--o{ t_leave_balances : "for"
     
-    LEAVE_REQUESTS ||--o{ LEAVE_APPROVALS : "has"
-    USERS ||--o{ LEAVE_APPROVALS : "approves"
+    t_leave_requests ||--o{ t_leave_approvals : "has"
+    t_users ||--o{ t_leave_approvals : "approves"
     
-    PAYROLL_SYSTEMS ||--o{ USER_PAYROLL_SETTINGS : "used in"
-    PAYROLLS ||--o{ PAYROLL_ITEMS : "contains"
+    m_payroll_systems ||--o{ t_user_payroll_settings : "used in"
+    t_payrolls ||--o{ t_payroll_items : "contains"
     
-    TENANTS {
+    t_users ||--o{ m_tenants : "creates"
+    t_users ||--o{ t_users : "created_by"
+    t_users ||--o{ t_users : "updated_by"
+    t_users ||--o{ t_users : "deleted_by"
+    t_users ||--o{ t_groups : "creates"
+    t_users ||--o{ m_punch_types : "creates"
+    t_users ||--o{ t_attendance_records : "creates"
+    t_users ||--o{ t_shifts : "creates"
+    t_users ||--o{ m_work_time_rules : "creates"
+    t_users ||--o{ t_work_time_records : "creates"
+    t_users ||--o{ m_leave_types : "creates"
+    t_users ||--o{ t_leave_requests : "creates"
+    t_users ||--o{ t_leave_approvals : "creates"
+    t_users ||--o{ t_leave_grants : "creates"
+    t_users ||--o{ t_leave_balances : "creates"
+    t_users ||--o{ m_payroll_systems : "creates"
+    t_users ||--o{ t_user_payroll_settings : "creates"
+    t_users ||--o{ t_payrolls : "creates"
+    t_users ||--o{ t_payroll_items : "creates"
+    t_users ||--o{ t_notifications : "creates"
+    
+    m_tenants {
         uuid id PK
         string name
         string subdomain
         boolean is_active
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
         timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    USERS {
+    t_users {
         uuid id PK
         uuid tenant_id FK
         string name
@@ -57,11 +81,14 @@ erDiagram
         string role
         string remember_token
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
         timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    TENANT_USERS {
+    r_tenant_users {
         uuid id PK
         uuid user_id FK
         uuid tenant_id FK
@@ -70,17 +97,20 @@ erDiagram
         timestamp updated_at
     }
     
-    GROUPS {
+    t_groups {
         uuid id PK
         uuid tenant_id FK
         string name
         text description
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
         timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    GROUP_USERS {
+    r_group_users {
         uuid id PK
         uuid group_id FK
         uuid user_id FK
@@ -88,7 +118,7 @@ erDiagram
         timestamp updated_at
     }
     
-    PUNCH_TYPES {
+    m_punch_types {
         uuid id PK
         uuid tenant_id FK
         string name
@@ -96,10 +126,14 @@ erDiagram
         integer display_order
         boolean is_active
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    ATTENDANCE_RECORDS {
+    t_attendance_records {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -111,10 +145,14 @@ erDiagram
         string ip_address
         text user_agent
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    SHIFTS {
+    t_shifts {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -129,10 +167,14 @@ erDiagram
         boolean is_late
         boolean is_early_leave
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    WORK_TIME_RULES {
+    m_work_time_rules {
         uuid id PK
         uuid tenant_id FK
         string name
@@ -146,10 +188,14 @@ erDiagram
         integer break_time_minutes
         boolean is_active
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    WORK_TIME_RECORDS {
+    t_work_time_records {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -165,10 +211,14 @@ erDiagram
         integer early_leave_count
         integer absence_count
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    LEAVE_TYPES {
+    m_leave_types {
         uuid id PK
         uuid tenant_id FK
         string name
@@ -178,10 +228,14 @@ erDiagram
         integer display_order
         boolean is_active
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    LEAVE_REQUESTS {
+    t_leave_requests {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -194,10 +248,14 @@ erDiagram
         text reason
         string status
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    LEAVE_APPROVALS {
+    t_leave_approvals {
         uuid id PK
         uuid tenant_id FK
         uuid leave_request_id FK
@@ -207,10 +265,14 @@ erDiagram
         text comment
         timestamp approved_at
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    LEAVE_GRANTS {
+    t_leave_grants {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -219,19 +281,28 @@ erDiagram
         decimal granted_days
         date expiry_date
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    LEAVE_BALANCES {
+    t_leave_balances {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
         uuid leave_type_id FK
         decimal balance_days
+        timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    PAYROLL_SYSTEMS {
+    m_payroll_systems {
         uuid id PK
         uuid tenant_id FK
         string name
@@ -242,10 +313,14 @@ erDiagram
         decimal holiday_work_rate
         boolean is_active
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    USER_PAYROLL_SETTINGS {
+    t_user_payroll_settings {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -254,10 +329,14 @@ erDiagram
         date effective_from
         date effective_to
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    PAYROLLS {
+    t_payrolls {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -277,10 +356,14 @@ erDiagram
         timestamp approved_at
         timestamp paid_at
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    PAYROLL_ITEMS {
+    t_payroll_items {
         uuid id PK
         uuid tenant_id FK
         uuid payroll_id FK
@@ -289,10 +372,14 @@ erDiagram
         decimal amount
         integer display_order
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
     
-    NOTIFICATIONS {
+    t_notifications {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -303,6 +390,10 @@ erDiagram
         boolean is_read
         timestamp read_at
         timestamp created_at
+        uuid created_by FK
         timestamp updated_at
+        uuid updated_by FK
+        timestamp deleted_at
+        uuid deleted_by FK
     }
 
