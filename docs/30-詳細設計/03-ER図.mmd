@@ -1,26 +1,26 @@
 erDiagram
-    m_tenants ||--o{ t_users : "has"
-    m_tenants ||--o{ t_groups : "has"
+    m_tenants ||--o{ m_users : "has"
+    m_tenants ||--o{ m_groups : "has"
     m_tenants ||--o{ m_punch_types : "has"
     m_tenants ||--o{ m_leave_types : "has"
     m_tenants ||--o{ m_work_time_rules : "has"
     m_tenants ||--o{ m_payroll_systems : "has"
     
-    t_users ||--o{ r_tenant_users : "belongs to"
+    m_users ||--o{ r_tenant_users : "belongs to"
     m_tenants ||--o{ r_tenant_users : "has"
     
-    t_users ||--o{ r_group_users : "belongs to"
-    t_groups ||--o{ r_group_users : "has"
+    m_users ||--o{ r_group_users : "belongs to"
+    m_groups ||--o{ r_group_users : "has"
     
-    t_users ||--o{ t_attendance_records : "creates"
-    t_users ||--o{ t_shifts : "has"
-    t_users ||--o{ t_work_time_records : "has"
-    t_users ||--o{ t_leave_requests : "creates"
-    t_users ||--o{ t_leave_grants : "receives"
-    t_users ||--o{ t_leave_balances : "has"
-    t_users ||--o{ t_user_payroll_settings : "has"
-    t_users ||--o{ t_payrolls : "receives"
-    t_users ||--o{ t_notifications : "receives"
+    m_users ||--o{ t_attendance_records : "creates"
+    m_users ||--o{ t_shifts : "has"
+    m_users ||--o{ t_work_time_records : "has"
+    m_users ||--o{ t_leave_requests : "creates"
+    m_users ||--o{ t_leave_grants : "receives"
+    m_users ||--o{ t_leave_balances : "has"
+    m_users ||--o{ m_user_payroll_settings : "has"
+    m_users ||--o{ t_payrolls : "receives"
+    m_users ||--o{ t_notifications : "receives"
     
     m_punch_types ||--o{ t_attendance_records : "used in"
     t_shifts ||--o{ t_attendance_records : "contains"
@@ -32,31 +32,44 @@ erDiagram
     m_leave_types ||--o{ t_leave_balances : "for"
     
     t_leave_requests ||--o{ t_leave_approvals : "has"
-    t_users ||--o{ t_leave_approvals : "approves"
+    m_users ||--o{ t_leave_approvals : "approves"
     
-    m_payroll_systems ||--o{ t_user_payroll_settings : "used in"
+    m_payroll_systems ||--o{ m_user_payroll_settings : "used in"
     t_payrolls ||--o{ t_payroll_items : "contains"
     
-    t_users ||--o{ m_tenants : "creates"
-    t_users ||--o{ t_users : "created_by"
-    t_users ||--o{ t_users : "updated_by"
-    t_users ||--o{ t_users : "deleted_by"
-    t_users ||--o{ t_groups : "creates"
-    t_users ||--o{ m_punch_types : "creates"
-    t_users ||--o{ t_attendance_records : "creates"
-    t_users ||--o{ t_shifts : "creates"
-    t_users ||--o{ m_work_time_rules : "creates"
-    t_users ||--o{ t_work_time_records : "creates"
-    t_users ||--o{ m_leave_types : "creates"
-    t_users ||--o{ t_leave_requests : "creates"
-    t_users ||--o{ t_leave_approvals : "creates"
-    t_users ||--o{ t_leave_grants : "creates"
-    t_users ||--o{ t_leave_balances : "creates"
-    t_users ||--o{ m_payroll_systems : "creates"
-    t_users ||--o{ t_user_payroll_settings : "creates"
-    t_users ||--o{ t_payrolls : "creates"
-    t_users ||--o{ t_payroll_items : "creates"
-    t_users ||--o{ t_notifications : "creates"
+    m_users ||--o{ m_tenants : "creates"
+    m_users ||--o{ m_users : "created_by"
+    m_users ||--o{ m_users : "updated_by"
+    m_users ||--o{ m_users : "deleted_by"
+    m_users ||--o{ m_groups : "creates"
+    m_users ||--o{ m_punch_types : "creates"
+    m_users ||--o{ t_attendance_records : "creates"
+    m_users ||--o{ t_shifts : "creates"
+    m_users ||--o{ m_work_time_rules : "creates"
+    m_users ||--o{ t_work_time_records : "creates"
+    m_users ||--o{ m_leave_types : "creates"
+    m_users ||--o{ t_leave_requests : "creates"
+    m_users ||--o{ t_leave_approvals : "creates"
+    m_users ||--o{ t_leave_grants : "creates"
+    m_users ||--o{ t_leave_balances : "creates"
+    m_users ||--o{ m_payroll_systems : "creates"
+    m_users ||--o{ m_user_payroll_settings : "creates"
+    m_users ||--o{ t_payrolls : "creates"
+    m_users ||--o{ t_payroll_items : "creates"
+    m_users ||--o{ t_notifications : "creates"
+    
+    m_users ||--o{ h_user_changes : "tracks"
+    t_attendance_records ||--o{ h_attendance_record_changes : "has history"
+    t_shifts ||--o{ h_shift_changes : "has history"
+    t_work_time_records ||--o{ h_work_time_record_changes : "has history"
+    t_leave_requests ||--o{ h_leave_request_changes : "has history"
+    t_payrolls ||--o{ h_payroll_changes : "has history"
+    m_users ||--o{ h_user_changes : "changed by"
+    m_users ||--o{ h_attendance_record_changes : "changed by"
+    m_users ||--o{ h_shift_changes : "changed by"
+    m_users ||--o{ h_work_time_record_changes : "changed by"
+    m_users ||--o{ h_leave_request_changes : "changed by"
+    m_users ||--o{ h_payroll_changes : "changed by"
     
     m_tenants {
         uuid id PK
@@ -71,7 +84,7 @@ erDiagram
         uuid deleted_by FK
     }
     
-    t_users {
+    m_users {
         uuid id PK
         uuid tenant_id FK
         string name
@@ -97,7 +110,7 @@ erDiagram
         timestamp updated_at
     }
     
-    t_groups {
+    m_groups {
         uuid id PK
         uuid tenant_id FK
         string name
@@ -320,7 +333,7 @@ erDiagram
         uuid deleted_by FK
     }
     
-    t_user_payroll_settings {
+    m_user_payroll_settings {
         uuid id PK
         uuid tenant_id FK
         uuid user_id FK
@@ -395,5 +408,107 @@ erDiagram
         uuid updated_by FK
         timestamp deleted_at
         uuid deleted_by FK
+    }
+    
+    h_user_changes {
+        uuid id PK
+        uuid user_id FK
+        uuid tenant_id FK
+        uuid changed_by FK
+        timestamp changed_at
+        string change_type
+        string field_name
+        text old_value
+        text new_value
+        text reason
+        timestamp created_at
+        uuid created_by FK
+        timestamp updated_at
+        uuid updated_by FK
+    }
+    
+    h_attendance_record_changes {
+        uuid id PK
+        uuid attendance_record_id FK
+        uuid tenant_id FK
+        uuid changed_by FK
+        timestamp changed_at
+        string change_type
+        string field_name
+        text old_value
+        text new_value
+        text reason
+        timestamp created_at
+        uuid created_by FK
+        timestamp updated_at
+        uuid updated_by FK
+    }
+    
+    h_shift_changes {
+        uuid id PK
+        uuid shift_id FK
+        uuid tenant_id FK
+        uuid changed_by FK
+        timestamp changed_at
+        string change_type
+        string field_name
+        text old_value
+        text new_value
+        text reason
+        timestamp created_at
+        uuid created_by FK
+        timestamp updated_at
+        uuid updated_by FK
+    }
+    
+    h_work_time_record_changes {
+        uuid id PK
+        uuid work_time_record_id FK
+        uuid tenant_id FK
+        uuid changed_by FK
+        timestamp changed_at
+        string change_type
+        string field_name
+        text old_value
+        text new_value
+        text reason
+        timestamp created_at
+        uuid created_by FK
+        timestamp updated_at
+        uuid updated_by FK
+    }
+    
+    h_leave_request_changes {
+        uuid id PK
+        uuid leave_request_id FK
+        uuid tenant_id FK
+        uuid changed_by FK
+        timestamp changed_at
+        string change_type
+        string field_name
+        text old_value
+        text new_value
+        text reason
+        timestamp created_at
+        uuid created_by FK
+        timestamp updated_at
+        uuid updated_by FK
+    }
+    
+    h_payroll_changes {
+        uuid id PK
+        uuid payroll_id FK
+        uuid tenant_id FK
+        uuid changed_by FK
+        timestamp changed_at
+        string change_type
+        string field_name
+        text old_value
+        text new_value
+        text reason
+        timestamp created_at
+        uuid created_by FK
+        timestamp updated_at
+        uuid updated_by FK
     }
 
