@@ -1,0 +1,252 @@
+# Monetim プロジェクト - Cursor Rules
+
+## プロジェクト概要
+
+**Monetim** - マルチテナント対応の勤怠給与管理システム
+
+### 技術スタック
+- **バックエンド**: Laravel 12.0, PHP 8.5+, PostgreSQL 16
+- **フロントエンド**: Inertia.js + React + TypeScript, Tailwind CSS, shadcn/ui
+- **テスト**: Pest (v4), PHPUnit 12
+- **コード品質**: Laravel Pint, ESLint, Prettier
+- **開発環境**: Docker + Laravel Sail
+
+## 重要な設計原則
+
+### 1. マルチテナント設計
+- **PostgreSQL RLS（Row Level Security）を使用**してデータベースレベルでデータ分離
+- すべてのテーブルに`tenant_id`カラムを追加
+- 1企業 = 1テナント、1ユーザーが複数テナントに所属可能
+- セッションに`tenant_id`を保存してテナントを識別
+
+### 2. 柔軟な設定方針
+- **すべての設定をテナントごとに動的に設定可能**
+- 打刻の種類、勤務時間計算ルール、休暇の種類、給与計算ルールなど、すべてテナント管理者が設定可能
+- ハードコーディングを避ける
+
+### 3. テスト戦略
+- **実装と並行してテストを作成**
+- 1ソースコードファイル = 1単体テスト
+- 1機能 = 1統合テスト
+- Pestを使用（単体テスト・統合テストの両方）
+
+## コーディング規約
+
+### PHP/Laravel
+
+#### 命名規則
+- **クラス名**: PascalCase (`UserController`, `AttendanceService`)
+- **メソッド名**: camelCase (`calculateWorkTime()`, `createLeaveRequest()`)
+- **変数名**: camelCase (`$userId`, `$attendanceRecord`)
+- **定数名**: UPPER_SNAKE_CASE (`MAX_WORK_HOURS`, `DEFAULT_ROLE`)
+- **データベース**: snake_case（テーブル名、カラム名）(`m_users`, `t_attendance_records`, `tenant_id`)
+
+#### ファイル構成
+- **コントローラー**: `app/Http/Controllers/{機能名}/{ControllerName}.php`
+- **モデル**: `app/Models/{ModelName}.php`
+- **サービス**: `app/Services/{ServiceName}.php`
+- **ポリシー**: `app/Policies/{PolicyName}.php`
+- **フォームリクエスト**: `app/Http/Requests/{RequestName}.php`
+
+#### コントローラーの原則
+- コントローラーは薄く保つ
+- ビジネスロジックはサービス層に移動
+- 1つのメソッドは1つの責任のみ
+- 依存性注入を使用
+
+#### モデルの原則
+- Eloquentモデルを使用
+- リレーションを適切に定義
+- アクセサ・ミューテータを活用
+- `$fillable`または`$guarded`を明示的に定義
+
+#### サービス層
+- ビジネスロジックはサービス層に実装
+- 再利用可能なメソッドを作成
+- 例外処理を適切に行う
+
+#### バリデーション
+- FormRequestを使用
+- カスタムバリデーションルールを作成
+
+### JavaScript/TypeScript/React
+
+#### 命名規則
+- **コンポーネント名**: PascalCase (`AttendancePunch`, `LeaveRequestForm`)
+- **変数名・関数名**: camelCase (`userId`, `handleSubmit`)
+- **定数名**: UPPER_SNAKE_CASE (`MAX_WORK_HOURS`, `API_BASE_URL`)
+
+#### ファイル構成
+```
+resources/js/
+├── Components/
+│   ├── ui/          # shadcn/uiコンポーネント
+│   ├── Attendance/
+│   └── Leave/
+├── Pages/
+│   ├── Auth/
+│   └── Dashboard/
+├── Hooks/
+├── Types/
+│   └── schemas.ts    # Zodスキーマ定義
+└── Utils/
+    ├── cn.ts         # クラス名マージユーティリティ
+    └── validation.ts # バリデーションユーティリティ
+```
+
+#### コンポーネント
+- 関数コンポーネントを使用
+- **すべてのReactコンポーネントはTypeScript（.tsx）で記述する**
+- JavaScript（.js, .jsx）は使用しない（既存ファイルを除く）
+- Propsの型を定義（interfaceまたはtypeを使用）
+- **React Hook Form + Zodでバリデーション**（必須）
+- **shadcn/uiコンポーネントを使用する**（`@/Components/ui`からインポート）
+- カスタムコンポーネントは`@/Components`に配置
+
+#### フォームバリデーション（Zod）
+- **すべてのフォームはZodスキーマでバリデーションする**
+- `zodResolver`を使用してReact Hook Formと統合
+- スキーマは`resources/js/Types/`に配置
+- 型推論: `z.infer<typeof schema>`でTypeScript型を生成
+- エラーメッセージは日本語で記述
+- 例:
+```typescript
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const formSchema = z.object({
+    email: z.string().email('有効なメールアドレスを入力してください'),
+    password: z.string().min(8, 'パスワードは8文字以上で入力してください'),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+});
+```
+
+### データベース
+
+#### テーブル設計原則
+- すべてのテーブルに`tenant_id`を追加
+- UUIDを主キーとして使用
+- タイムスタンプ（`created_at`, `updated_at`）を自動管理
+- ソフトデリート対応（`deleted_at`）
+
+#### インデックス
+- すべての`tenant_id`カラムにインデックス
+- すべての`user_id`カラムにインデックス
+- 日付・時刻カラムにインデックス（検索・集計用）
+
+## テスト規約
+
+### Pestの書き方
+
+#### 単体テスト
+```php
+test('can calculate work time', function () {
+    $user = User::factory()->create();
+    $result = $this->workTimeService->calculate($user->id, '2025-12-01', '2025-12-31');
+    expect($result)->not->toBeNull();
+    expect($result->total_minutes)->toBeGreaterThan(0);
+});
+```
+
+#### 機能テスト
+```php
+test('user can punch attendance', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    
+    $response = $this->post('/api/attendance/punch', [
+        'punch_type_id' => $punchType->id,
+    ]);
+    
+    $response->assertStatus(201);
+    $this->assertDatabaseHas('attendance_records', [
+        'user_id' => $user->id,
+    ]);
+});
+```
+
+### テストファイル名
+- 単体テスト: `tests/Unit/{ClassName}Test.php`
+- 機能テスト: `tests/Feature/{FeatureName}Test.php`
+
+## コード品質ツール
+
+### Laravel Pint（PHP）
+- コードフォーマット: `docker compose exec laravel.test ./vendor/bin/pint`
+- チェックのみ: `docker compose exec laravel.test ./vendor/bin/pint --test`
+- または: `docker compose exec laravel.test composer pint`
+
+### ESLint（JavaScript/TypeScript）
+- リンター実行: `docker compose exec laravel.test npm run lint`
+- 自動修正: `docker compose exec laravel.test npm run lint:fix`
+
+### Prettier（JavaScript/TypeScript/CSS/Markdown）
+- フォーマット: `docker compose exec laravel.test npm run format`
+- チェックのみ: `docker compose exec laravel.test npm run format:check`
+
+## ドキュメント参照
+
+実装前に必ず以下を確認：
+- **テーブル定義**: `docs/30-詳細設計/02-テーブル定義書.md`
+- **要件定義**: `docs/00-要件/01-要件定義書.md`
+- **詳細設計**: `docs/30-詳細設計/01-詳細設計書.md`
+- **コーディング規約**: `docs/40-開発/03-コーディング規約.md`
+
+## 実装時の注意事項
+
+1. **マルチテナント対応**
+   - すべてのクエリで`tenant_id`を考慮
+   - RLSポリシーが正しく設定されているか確認
+   - テナント間のデータ漏洩を防ぐ
+
+2. **柔軟な設定**
+   - ハードコーディングを避ける
+   - 設定テーブルを活用
+   - テナントごとの設定を考慮
+
+3. **テスト**
+   - 実装と並行してテストを作成
+   - 単体テスト・統合テストの両方を作成
+   - テストカバレッジを意識
+
+4. **セキュリティ**
+   - 認証・認可を適切に実装
+   - 入力検証を必ず行う
+   - SQLインジェクション対策（Eloquent ORM使用）
+   - XSS対策（Laravelの自動エスケープ）
+
+5. **パフォーマンス**
+   - N+1問題を避ける（Eager Loading使用）
+   - 適切なインデックスを設定
+   - キャッシュを活用
+
+## コミットメッセージ規約
+
+```
+[種類] 簡潔な説明
+
+詳細な説明（必要に応じて）
+```
+
+**種類**:
+- `feat`: 新機能
+- `fix`: バグ修正
+- `docs`: ドキュメント
+- `style`: コードスタイル
+- `refactor`: リファクタリング
+- `test`: テスト
+- `chore`: その他
+
+## その他
+
+- すべてのコードは英語で記述
+- 必要に応じて日本語のコメントを追加
+- DRY原則を守る
+- 可読性・保守性を重視
+
