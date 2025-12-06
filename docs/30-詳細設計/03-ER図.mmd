@@ -1,0 +1,308 @@
+erDiagram
+    TENANTS ||--o{ USERS : "has"
+    TENANTS ||--o{ GROUPS : "has"
+    TENANTS ||--o{ PUNCH_TYPES : "has"
+    TENANTS ||--o{ LEAVE_TYPES : "has"
+    TENANTS ||--o{ WORK_TIME_RULES : "has"
+    TENANTS ||--o{ PAYROLL_SYSTEMS : "has"
+    
+    USERS ||--o{ TENANT_USERS : "belongs to"
+    TENANTS ||--o{ TENANT_USERS : "has"
+    
+    USERS ||--o{ GROUP_USERS : "belongs to"
+    GROUPS ||--o{ GROUP_USERS : "has"
+    
+    USERS ||--o{ ATTENDANCE_RECORDS : "creates"
+    USERS ||--o{ SHIFTS : "has"
+    USERS ||--o{ WORK_TIME_RECORDS : "has"
+    USERS ||--o{ LEAVE_REQUESTS : "creates"
+    USERS ||--o{ LEAVE_GRANTS : "receives"
+    USERS ||--o{ LEAVE_BALANCES : "has"
+    USERS ||--o{ USER_PAYROLL_SETTINGS : "has"
+    USERS ||--o{ PAYROLLS : "receives"
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    
+    PUNCH_TYPES ||--o{ ATTENDANCE_RECORDS : "used in"
+    SHIFTS ||--o{ ATTENDANCE_RECORDS : "contains"
+    
+    WORK_TIME_RULES ||--o{ WORK_TIME_RECORDS : "used for"
+    
+    LEAVE_TYPES ||--o{ LEAVE_REQUESTS : "used in"
+    LEAVE_TYPES ||--o{ LEAVE_GRANTS : "granted as"
+    LEAVE_TYPES ||--o{ LEAVE_BALANCES : "for"
+    
+    LEAVE_REQUESTS ||--o{ LEAVE_APPROVALS : "has"
+    USERS ||--o{ LEAVE_APPROVALS : "approves"
+    
+    PAYROLL_SYSTEMS ||--o{ USER_PAYROLL_SETTINGS : "used in"
+    PAYROLLS ||--o{ PAYROLL_ITEMS : "contains"
+    
+    TENANTS {
+        uuid id PK
+        string name
+        string subdomain
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    USERS {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string email
+        timestamp email_verified_at
+        string password
+        string role
+        string remember_token
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    TENANT_USERS {
+        uuid id PK
+        uuid user_id FK
+        uuid tenant_id FK
+        string role
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    GROUPS {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        text description
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    GROUP_USERS {
+        uuid id PK
+        uuid group_id FK
+        uuid user_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    PUNCH_TYPES {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string code
+        integer display_order
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    ATTENDANCE_RECORDS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        uuid shift_id FK
+        uuid punch_type_id FK
+        timestamp punched_at
+        decimal latitude
+        decimal longitude
+        string ip_address
+        text user_agent
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    SHIFTS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        date work_date
+        timestamp start_time
+        timestamp end_time
+        integer total_minutes
+        integer break_minutes
+        integer work_minutes
+        integer overtime_minutes
+        integer night_work_minutes
+        boolean is_late
+        boolean is_early_leave
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    WORK_TIME_RULES {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string rule_type
+        integer standard_hours
+        string overtime_calculation_method
+        time night_work_start_time
+        time night_work_end_time
+        decimal night_work_rate
+        string break_time_calculation_method
+        integer break_time_minutes
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    WORK_TIME_RECORDS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        date record_date
+        string record_type
+        integer total_minutes
+        integer work_minutes
+        integer standard_minutes
+        integer overtime_minutes
+        integer night_work_minutes
+        integer break_minutes
+        integer late_count
+        integer early_leave_count
+        integer absence_count
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    LEAVE_TYPES {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string code
+        boolean is_paid
+        string color
+        integer display_order
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    LEAVE_REQUESTS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        uuid leave_type_id FK
+        date start_date
+        date end_date
+        time start_time
+        time end_time
+        decimal total_days
+        text reason
+        string status
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    LEAVE_APPROVALS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid leave_request_id FK
+        uuid approver_id FK
+        integer approval_order
+        string status
+        text comment
+        timestamp approved_at
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    LEAVE_GRANTS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        uuid leave_type_id FK
+        date grant_date
+        decimal granted_days
+        date expiry_date
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    LEAVE_BALANCES {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        uuid leave_type_id FK
+        decimal balance_days
+        timestamp updated_at
+    }
+    
+    PAYROLL_SYSTEMS {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string system_type
+        decimal base_rate
+        decimal overtime_rate
+        decimal night_work_rate
+        decimal holiday_work_rate
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    USER_PAYROLL_SETTINGS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        uuid payroll_system_id FK
+        decimal base_rate
+        date effective_from
+        date effective_to
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    PAYROLLS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        date calculation_period_start
+        date calculation_period_end
+        integer total_work_minutes
+        integer total_overtime_minutes
+        integer total_night_work_minutes
+        decimal base_amount
+        decimal overtime_amount
+        decimal night_work_amount
+        decimal allowance_amount
+        decimal deduction_amount
+        decimal total_amount
+        string status
+        timestamp calculated_at
+        timestamp approved_at
+        timestamp paid_at
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    PAYROLL_ITEMS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid payroll_id FK
+        string item_type
+        string item_name
+        decimal amount
+        integer display_order
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    NOTIFICATIONS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        string type
+        string title
+        text message
+        json data
+        boolean is_read
+        timestamp read_at
+        timestamp created_at
+        timestamp updated_at
+    }
+

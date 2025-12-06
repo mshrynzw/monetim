@@ -1,0 +1,564 @@
+openapi: 3.0.0
+info:
+  title: monetim API
+  version: 1.0.0
+  description: monetim勤怠給与管理システムのAPI仕様書
+servers:
+  - url: http://localhost/api
+    description: 開発環境
+  - url: https://api.monetim.example.com
+    description: 本番環境
+
+tags:
+  - name: Auth
+    description: 認証関連
+  - name: Tenants
+    description: テナント管理
+  - name: Users
+    description: ユーザー管理
+  - name: Attendance
+    description: 出退勤
+  - name: WorkTime
+    description: 勤務時間計算
+  - name: Leave
+    description: 休暇管理
+  - name: Payroll
+    description: 給与計算
+  - name: Reports
+    description: レポート
+  - name: Notifications
+    description: 通知
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: ログイン
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: ログイン成功
+        '401':
+          description: 認証失敗
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: ログアウト
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ログアウト成功
+
+  /tenants:
+    get:
+      tags:
+        - Tenants
+      summary: テナント一覧取得
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tenant'
+    post:
+      tags:
+        - Tenants
+      summary: テナント作成
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreate'
+      responses:
+        '201':
+          description: 作成成功
+
+  /tenants/{id}:
+    get:
+      tags:
+        - Tenants
+      summary: テナント詳細取得
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功
+    put:
+      tags:
+        - Tenants
+      summary: テナント更新
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdate'
+      responses:
+        '200':
+          description: 更新成功
+    delete:
+      tags:
+        - Tenants
+      summary: テナント削除
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 削除成功
+
+  /attendance/punch:
+    post:
+      tags:
+        - Attendance
+      summary: 打刻
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - punch_type_id
+              properties:
+                punch_type_id:
+                  type: string
+                  format: uuid
+                latitude:
+                  type: number
+                  format: double
+                longitude:
+                  type: number
+                  format: double
+      responses:
+        '201':
+          description: 打刻成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceRecord'
+
+  /attendance/records:
+    get:
+      tags:
+        - Attendance
+      summary: 打刻履歴取得
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AttendanceRecord'
+
+  /work-time/calculate:
+    post:
+      tags:
+        - WorkTime
+      summary: 勤務時間計算
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - start_date
+                - end_date
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: 計算成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkTimeRecord'
+
+  /leave/requests:
+    get:
+      tags:
+        - Leave
+      summary: 休暇申請一覧取得
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaveRequest'
+    post:
+      tags:
+        - Leave
+      summary: 休暇申請作成
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequestCreate'
+      responses:
+        '201':
+          description: 申請成功
+
+  /leave/requests/{id}/approve:
+    post:
+      tags:
+        - Leave
+      summary: 休暇申請承認
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+      responses:
+        '200':
+          description: 承認成功
+
+  /payroll/calculate:
+    post:
+      tags:
+        - Payroll
+      summary: 給与計算
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - period_start
+                - period_end
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                period_start:
+                  type: string
+                  format: date
+                period_end:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: 計算成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payroll'
+
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: 通知一覧取得
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: is_read
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+
+  /notifications/{id}/read:
+    post:
+      tags:
+        - Notifications
+      summary: 通知を既読にする
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    TenantCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        subdomain:
+          type: string
+
+    TenantUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        is_active:
+          type: boolean
+
+    AttendanceRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        punch_type_id:
+          type: string
+          format: uuid
+        punched_at:
+          type: string
+          format: date-time
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+
+    WorkTimeRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        record_date:
+          type: string
+          format: date
+        total_minutes:
+          type: integer
+        work_minutes:
+          type: integer
+        overtime_minutes:
+          type: integer
+
+    LeaveRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        leave_type_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        total_days:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [pending, approved, rejected, cancelled]
+
+    LeaveRequestCreate:
+      type: object
+      required:
+        - leave_type_id
+        - start_date
+        - end_date
+      properties:
+        leave_type_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        reason:
+          type: string
+
+    Payroll:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        calculation_period_start:
+          type: string
+          format: date
+        calculation_period_end:
+          type: string
+          format: date
+        base_amount:
+          type: number
+          format: decimal
+        overtime_amount:
+          type: number
+          format: decimal
+        total_amount:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [draft, calculated, approved, paid]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
